@@ -9,4 +9,4 @@ read -p "Link: " v_link
 
 curl -u ${v_email}:${v_pass} -o ${v_output} "${v_link}" > download_${v_output}.out 2>&1 &
 
-tailf download_${v_output}.out
+tail -f download_${v_output}.out
