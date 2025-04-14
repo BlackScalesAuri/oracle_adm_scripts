@@ -6,14 +6,15 @@ Col OWNER for a40
 Col INDEX_NAME for a40 
 Col INDEX_TYPE for a40 
 Col TABLE_NAME for a40 
+Col UNIQUENESS for a40
 
 
 SELECT 
-    idx.OWNER
+    idx.OWNER,
     idx.TABLE_NAME,
     idx.INDEX_NAME,
     col.COLUMN_NAME,
-    idx.UNIQUENESS,
+    idx.UNIQUENESS
 FROM 
     DBA_INDEXES idx
 JOIN 

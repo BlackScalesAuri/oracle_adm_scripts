@@ -12,6 +12,7 @@ ACCEPT VAR_SID PROMPT  'INFORME O SID             : '
 col USERNAME for a18 
 col OSUSER for a18 TRU
 col ACESSO for a11 
+col LOGIN for a11
 col TEMPO for a11
 col PROGRAM for a30 TRU
 col MACHINE for a20 TRU
