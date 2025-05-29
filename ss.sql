@@ -17,6 +17,7 @@ col TEMPO for a11
 col PROGRAM for a30 TRU
 col MACHINE for a20 TRU
 col TERMINAL for a18 TRU
+col schemaname for a30
 
 SELECT inst_id, SID, USERNAME,
     STATUS,
