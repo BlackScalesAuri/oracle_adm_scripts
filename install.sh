@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 echo
@@ -9,7 +8,6 @@ echo
 TARGET_DIR="$HOME/scripts_vitor"
 TARGET_DIAG="${HOME}/diag_oracle"
 BASH_PROFILE="${HOME}/.bash_profile"
-
 
 # 1) Criar pasta de scripts
 read -p "1) Criar pasta de scripts em '$HOME/scripts_vitor'? [y/N] " resp
@@ -22,18 +20,14 @@ else
   echo "   Pulando criacao de pasta de scripts."
 fi
 
-
-
 # 2) Baixar e extrair o repo
 read -p "2) Baixar e extrair oracle_adm_scripts no destino atual? [y/N] " resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Iniciando download do repositorio..."
   if command -v curl >/dev/null; then
-    curl -sL https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master \
-      | tar xz --strip-components=1
+    curl -sL https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master | tar xz --strip-components=1
   elif command -v wget >/dev/null; then
-    wget -qO- https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master \
-      | tar xz --strip-components=1
+    wget -qO- https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master | tar xz --strip-components=1
   else
     echo "Erro: nem curl nem wget encontrados. Abortando."
     exit 1
@@ -43,8 +37,6 @@ else
   echo "   Pulando download do repositorio."
 fi
 echo
-
-
 
 # 3) Criar pasta de diag e links de alert logs
 read -p "3) Criar ~/diag_oracle e links para todos os alert_*.log? [y/N] " resp
@@ -69,9 +61,6 @@ else
   echo "   Pulando criacao de links de alert logs."
 fi
 echo
-
-
-
 
 # 4) Atualizar .bash_profile com SQL_PATH
 read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] " resp
