@@ -23,10 +23,10 @@ read -p "2) Baixar e extrair oracle_adm_scripts no destino atual? [y/N] " resp
 if [[ $resp =~ ^[Yy]$ ]]; then
   echo "-> Iniciando download do repositorio..."
   if command -v curl >/dev/null; then
-    curl -sL https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
+    curl -sL https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master \
       | tar xz --strip-components=1
   elif command -v wget >/dev/null; then
-    wget -qO- https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
+    wget -qO- https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master \
       | tar xz --strip-components=1
   else
     echo "Erro: nem curl nem wget encontrados. Abortando."
