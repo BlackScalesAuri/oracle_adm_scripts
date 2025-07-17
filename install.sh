@@ -5,10 +5,14 @@ echo
 echo "=== Iniciando instalacao do oracle_adm_scripts por Vitor Christovao ==="
 echo
 
+TARGET_DIR="$HOME/scripts_vitor"
+TARGET_DIAG="${HOME}/diag_oracle"
+BASH_PROFILE="${HOME}/.bash_profile"
+
+
 # 1) Criar pasta de scripts
-read -p "1) Criar/destino dos scripts em '$HOME/scripts_vitor'? [y/N] " resp
-if [[ $resp =~ ^[Yy]$ ]]; then
-  TARGET_DIR="${HOME}/scripts_vitor"
+read -p "1) Criar pasta de scripts em '$HOME/scripts_vitor'? [y/N] " resp
+if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIR..."
   mkdir -p "$TARGET_DIR"
   cd "$TARGET_DIR"
@@ -16,11 +20,12 @@ if [[ $resp =~ ^[Yy]$ ]]; then
 else
   echo "   Pulando criacao de pasta de scripts."
 fi
-echo
+
+
 
 # 2) Baixar e extrair o repo
 read -p "2) Baixar e extrair oracle_adm_scripts no destino atual? [y/N] " resp
-if [[ $resp =~ ^[Yy]$ ]]; then
+if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Iniciando download do repositorio..."
   if command -v curl >/dev/null; then
     curl -sL https://codeload.github.com/BlackScalesAuri/oracle_adm_scripts/tar.gz/master \
@@ -38,10 +43,11 @@ else
 fi
 echo
 
+
+
 # 3) Criar pasta de diag e links de alert logs
 read -p "3) Criar ~/diag_oracle e links para todos os alert_*.log? [y/N] " resp
-if [[ $resp =~ ^[Yy]$ ]]; then
-  TARGET_DIAG="${HOME}/diag_oracle"
+if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
   mkdir -p "$TARGET_DIAG"
   echo "-> Varredura para alert logs..."
@@ -63,10 +69,12 @@ else
 fi
 echo
 
+
+
+
 # 4) Atualizar .bash_profile com SQL_PATH
 read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] " resp
 if [[ $resp =~ ^[Yy]$ ]]; then
-  BASH_PROFILE="${HOME}/.bash_profile"
   echo "-> Atualizando $BASH_PROFILE..."
   if grep -q 'SQL_PATH' "$BASH_PROFILE" 2>/dev/null; then
     echo "   Erro: SQL_PATH ja configurado em $BASH_PROFILE."
@@ -80,4 +88,5 @@ if [[ $resp =~ ^[Yy]$ ]]; then
     echo "   SQL_PATH adicionado com sucesso."
   fi
 else
-  echo "   Pulando configuracao de
+    echo "   Pulando criacao de pasta de scripts."
+fi
