@@ -51,7 +51,7 @@ if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
   mkdir -p "$TARGET_DIAG"
   echo "-> Varredura para alert logs..."
-  for DIR in /u01 /u02 /u03 /u04 /orabin /orabin01 /orabin02 /oracle; do
+  for DIR in /u01 /u02 /u03 /u04 /orabin/ /orabin01/ /orabin02/ /oracle; do
     [ -d "$DIR" ] || continue
     find "$DIR" -type f -name 'alert_*.log' 2>/dev/null | while read -r log; do
       name=$(basename "$log")
