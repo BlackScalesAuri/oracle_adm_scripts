@@ -63,7 +63,7 @@ fi
 echo
 
 # 4) Atualizar .bash_profile com SQL_PATH
-read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] " resp
+read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
 if [[ $resp =~ ^[Yy]$ ]]; then
   echo "-> Atualizando $BASH_PROFILE..."
   if grep -q 'SQL_PATH' "$BASH_PROFILE" 2>/dev/null; then
