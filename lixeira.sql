@@ -1,3 +1,6 @@
+/*
+	Lista lixeira e limpa se confirmado
+*/
 prompt == OBJETOS NA LIXEIRA =================================================================
 
 select rownum, OWNER, OBJECT_NAME, ORIGINAL_NAME, TYPE, DROPTIME, SPACE from dba_recyclebin;

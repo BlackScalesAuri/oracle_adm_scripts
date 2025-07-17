@@ -2,25 +2,26 @@
   Script para monitoramento de longops e recursos da maquina
 */
 
+prompt == Uptime ======================================================================
 !uptime
 
 prompt == Longops =====================================================================
 
 col USERNAME for a6
-col MESSAGE for a150
+COLUMN message FORMAT A150 TRUNC
 col DONE_TOTAL for A24
 col ELAPSED for a14
 col TIME_LEFT for a15
 col USERNAME for a10
 col OPNAME for a35
 col TARGET for a35
+
 set pages 900 lines 900
 
 SELECT
   LPAD(ROUND(S.SOFAR / S.TOTALWORK * 100, 2), 6) || ' %' AS PCT_DONE,
   V.USERNAME,
   S.OPNAME,
---  S.TARGET,
   TO_CHAR(S.START_TIME, 'DD-MON HH24:MI:SS') AS STARTED_AT,
   ROUND(S.ELAPSED_SECONDS/60, 1) || ' min' AS ELAPSED,
   ROUND(S.TIME_REMAINING/60, 1) || ' min' AS TIME_LEFT,
@@ -55,22 +56,8 @@ FROM
 ORDER BY
   NAME;
 
-prompt == Temp Usage ==================================================================
+prompt == Sess. Active ================================================================
 
-SELECT
-  TABLESPACE_NAME,
-  ROUND(SUM(BYTES_USED) / 1024 / 1024, 2) AS USED_MB,
-  ROUND(SUM(BYTES_FREE) / 1024 / 1024, 2) AS FREE_MB,
-  ROUND(SUM(BYTES_USED) / SUM(BYTES_USED + BYTES_FREE) * 100, 2) AS USED_PCT
-FROM
-  V$TEMP_SPACE_HEADER
-WHERE
-  TABLESPACE_NAME = 'TEMP2'
-GROUP BY
-  TABLESPACE_NAME;
-
-prompt == Undo Usage ==================================================================
-
-@ss_undo
+@ss_active
 
 quit

@@ -1,3 +1,7 @@
+/*
+    Gera script de coleta de staticas por owner
+*/
+
 @set
 set trimspo on
 

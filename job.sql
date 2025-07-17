@@ -1,17 +1,25 @@
 /*
-Lista info. de jobs cadastrados 
-Lista Jobs e Scheduled jobs em execucao
+    Lista info. de jobs cadastrados 
+    Lista Jobs e Scheduled jobs em execucao
 */
 @set
 SET VERIFY OFF
 
-COL "WHAT"     FORMAT A80
-COL "LAST"     FORMAT A20
-COL "LOG_USER" FORMAT A20
+COL "WHAT"             FORMAT A80
+COL "LAST"             FORMAT A20
+COL "LOG_USER"         FORMAT A20
+COL "owner"            FORMAT A15
+COL "job_name"             FORMAT A30
+COL "enabled"           FORMAT A7
+COL "fail"         FORMAT 9999
+COL "last_start_date"         FORMAT A36
+COL "next_run_date"         FORMAT A36
 
 accept VAR_OWNER prompt 'INFORME O OWNER: '
 
-prompt == JOBs ===============================================================================
+
+prompt == DBA_JOBS(Deprecated) ==================================================================================================================================================================================================
+prompt
 SELECT 
     LOG_USER,
     JOB,
@@ -26,12 +34,36 @@ WHERE
     LOG_USER LIKE UPPER('%&VAR_OWNER%')
 ORDER BY WHAT;
 
-prompt == JOBs em execucao. ==================================================================
+prompt == Scheduled Jobs ========================================================================================================================================================================================================
 
---select j.LOG_USER, jr.SID, jr.JOB, jr.FAILURES, jr.LAST_DATE, jr.LAST_SEC, jr.THIS_DATE, jr.THIS_SEC, jr.INSTANCE 
---from dba_jobs_running jr inner join dba_jobs j on j.job = jr.job
---where j.LOG_USER LIKE upper('%&VAR_OWNER%')
---/
+SELECT 
+    j.owner,
+    j.enabled,
+    NVL(f.failures, 0) AS fail,
+    j.job_name,
+    COALESCE(j.program_name, j.job_action) AS WHAT,
+    j.last_start_date,
+    j.next_run_date
+FROM 
+    dba_scheduler_jobs j
+LEFT JOIN (
+    /* conta quantas execucoes falharam */
+    SELECT 
+        job_name,
+        COUNT(*) AS failures
+    FROM 
+        dba_scheduler_job_run_details
+    WHERE 
+        status != 'SUCCEEDED'
+    GROUP BY 
+        job_name
+) f 
+  ON j.job_name = f.job_name
+ORDER BY 
+    j.owner, j.job_name;
+
+
+prompt == DBA_JOBS(Deprecated) em execucao ======================================================================================================================================================================================
 
 SELECT 
     LOWNER,V.SID, V.ID2 JOB, J.FAILURES,
@@ -43,7 +75,8 @@ FROM
 WHERE
     V.TYPE = 'JQ' AND J.JOB(+) = V.ID2; 
 
-prompt == SCHEDULED JOBs em execucao. ========================================================
+prompt == Scheduled Jobs em execucao ============================================================================================================================================================================================
+
 SELECT
     OWNER,
     JOB_NAME,

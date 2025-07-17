@@ -1,0 +1,41 @@
+/*
+        Lista objetos em lock
+*/
+@set
+
+COL OBJECT_NAME     FOR A25
+COL QTD_LOCK     FOR 999
+COL USERNAME        FOR A15
+COL SID             FOR 99999
+COL INST_ID         FOR 9999   HEADING 'INST|ID'
+
+PROMPT "=== Objetos em lock ======================================="
+SELECT
+        B.OBJECT_NAME,
+        C.USERNAME,
+        SESSION_ID SID,
+        C.INST_ID
+FROM 
+        GV$LOCKED_OBJECT A, 
+        DBA_OBJECTS B,
+        GV$SESSION C
+WHERE 
+        A.INST_ID = C.INST_ID AND
+        A.OBJECT_ID = B.OBJECT_ID AND
+        SESSION_ID = SID 
+ORDER BY 1 ASC;
+
+SELECT
+        COUNT(OBJECT_NAME) QTD_LOCK,
+        B.OBJECT_NAME
+FROM 
+        GV$LOCKED_OBJECT A, 
+        DBA_OBJECTS B,
+        GV$SESSION C
+WHERE 
+        A.INST_ID = C.INST_ID AND
+        A.OBJECT_ID = B.OBJECT_ID AND
+        SESSION_ID = SID AND
+        C.USERNAME = A.ORACLE_USERNAME  
+GROUP BY B.OBJECT_NAME HAVING COUNT(OBJECT_NAME) > 0
+ORDER BY 1 ASC;

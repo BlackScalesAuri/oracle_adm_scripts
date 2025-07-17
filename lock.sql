@@ -1,18 +1,33 @@
+/*
+        Lista sessões em lock
+*/
 @set
-prompt "########## sessões em lock ##########"
+prompt === Sessoes em lock ==========================================================================================================================================
 
-col "Inst: Blocker" for a15
-col "Inst: Blocked" for a15
-
- SELECT 
-     INST_LOCK||'   : '||SID_LOCK as  "Inst: Blocker",
-     INST_WAIT||'   : '||SID_WAIT  as "Inst: Blocked",
-      LOCK_CTIME_HOUR,
-      WAIT_CTIME_HOUR,
---      T2.CLIENT_INFO CI_LOCK,
---      T3.CLIENT_INFO CI_WAIT,
-      WAITER_LOCK_TYPE,
-      WAITER_MODE_REQ
+COL "INST: BLOCKER"  FOR A15
+COL "INST: BLOCKED"  FOR A15
+COL SID              FOR A9     HEADING 'SID'
+COL "SERIAL#"        FOR 999999 HEADING 'SERIAL#'
+COL INST_ID          FOR 9999   HEADING 'INST|ID'
+COL USERNAME         FOR A15    HEADING 'USERNAME'
+COL OBJECT_NAME      FOR A25    HEADING 'OBJECT_NAME'
+COL SQL_ID           FOR A13    HEADING 'SQL_ID'
+COL INST_LOCK        FOR A6     HEADING 'INST|LOCK'
+COL SID_LOCK         FOR A6     HEADING 'SID|LOCK'
+COL LOCK_CTIME       FOR A6     HEADING 'LOCK|CTIME'
+COL INST_WAIT        FOR A6     HEADING 'INST|WAIT'
+COL SID_WAIT         FOR A6     HEADING 'SID|WAIT'
+COL WAIT_CTIME       FOR A6     HEADING 'WAIT|CTIME'
+COL WAITER_LOCK_TYPE FOR A22  
+COL WAITER_MODE_REQ  FOR A19
+ 
+SELECT 
+        INST_LOCK||'   : '||SID_LOCK as  "Inst: Blocker",
+        INST_WAIT||'   : '||SID_WAIT  as "Inst: Blocked",
+        LOCK_CTIME_HOUR,
+        WAIT_CTIME_HOUR,
+        WAITER_LOCK_TYPE,
+        WAITER_MODE_REQ
 from
 (
 SELECT LH.INST_ID INST_LOCK, LH.SID SID_LOCK, ROUND(LH.CTIME/60/60,2) LOCK_CTIME_HOUR,
@@ -47,46 +62,42 @@ SELECT LH.INST_ID INST_LOCK, LH.SID SID_LOCK, ROUND(LH.CTIME/60/60,2) LOCK_CTIME
                5, 'Share-Row-Exclusive',
                6, 'Exclusive',
                'Nothing-'
-              ) waiter_mode_req
-FROM   gv$lock lw, gv$lock lh
-WHERE  lh.id1 = lw.id1
-AND    lh.id2 = lw.id2
-AND    lh.request = 0
-AND    lw.lmode = 0
-AND    (lh.id1, lh.id2) IN (
-                           SELECT id1, id2
-                           FROM   gv$lock
-                           WHERE  request = 0
+              ) WAITER_MODE_REQ
+FROM   GV$LOCK LW, GV$LOCK LH
+WHERE  LH.ID1 = LW.ID1
+AND    LH.ID2 = LW.ID2
+AND    LH.REQUEST = 0
+AND    LW.LMODE = 0
+AND    (LH.ID1, LH.ID2) IN (
+                           SELECT ID1, ID2
+                           FROM   GV$LOCK
+                           WHERE  REQUEST = 0
                            INTERSECT
-                           SELECT id1, id2
-                           FROM   gv$lock
-                           WHERE  lmode = 0)
-)  t1
-,  gv$session t2
-,  gv$session t3
-where  (t1.inst_lock = t2.inst_id and t1.sid_lock = t2.sid)
-and    (t1.inst_wait = t3.inst_id and t1.sid_wait = t3.sid)
-order by LOCK_CTIME_HOUR desc,SID_LOCK
-/
+                           SELECT ID1, ID2
+                           FROM   GV$LOCK
+                           WHERE  LMODE = 0)
+)  T1
+,  GV$SESSION T2
+,  GV$SESSION T3
+WHERE  (T1.INST_LOCK = T2.INST_ID AND T1.SID_LOCK = T2.SID)
+AND    (T1.INST_WAIT = T3.INST_ID AND T1.SID_WAIT = T3.SID)
+ORDER BY LOCK_CTIME_HOUR DESC,SID_LOCK;
 
-
-col SID for 999
-
-prompt "############# locktree ##############"
-/* LOCKTREE.sql
- * Baseado no script locktree.sql de Guy Harrison, em http://165.225.144.123/OPSGSamples/Ch15/lock_tree.sql
- */
+prompt === LOCKTREE =================================================================================================================================================
+/* 
+        Baseado no script locktree.sql de Guy Harrison
+*/
 
 WITH 
-sessions AS
-   (SELECT distinct 
-           inst_id, sid, serial#, username, blocking_session, row_wait_obj#, sql_id
-      FROM gv$session),
-locks AS
+SESSIONS AS
+   (SELECT DISTINCT 
+           INST_ID, SID, SERIAL#, USERNAME, BLOCKING_SESSION, ROW_WAIT_OBJ#, SQL_ID
+      FROM GV$SESSION),
+LOCKS AS
 (
-    SELECT distinct lh.inst_id inst_lock, lh.SID sid_lock, lh.ctime lock_ctime,
-           lw.inst_id inst_wait, lw.SID sid_wait, lw.ctime wait_ctime,
-           DECODE (lh.TYPE,
+    SELECT DISTINCT LH.INST_ID INST_LOCK, LH.SID SID_LOCK, LH.CTIME LOCK_CTIME,
+           LW.INST_ID INST_WAIT, LW.SID SID_WAIT, LW.CTIME WAIT_CTIME,
+           DECODE (LH.TYPE,
                    'MR', 'Media_recovery',
                    'RT', 'Redo_thread',
                    'UN', 'User_name',
@@ -106,8 +117,8 @@ locks AS
                    'TE', 'Extend_table',
                    'TT', 'Temp_table',
                    'Nothing-'
-                  ) waiter_lock_type,
-           DECODE (lw.request,
+                  ) WAITER_LOCK_TYPE,
+           DECODE (LW.REQUEST,
                    0, 'None',
                    1, 'NoLock',
                    2, 'Row-Share',
@@ -116,110 +127,60 @@ locks AS
                    5, 'Share-Row-Exclusive',
                    6, 'Exclusive',
                    'Nothing-'
-                  ) waiter_mode_req
-    FROM   gv$lock lw, gv$lock lh
-    WHERE  lh.id1 = lw.id1
-    AND    lh.id2 = lw.id2
-    AND    lh.request = 0
-    AND    lw.lmode = 0
-    AND    (lh.id1, lh.id2) IN (
-                               SELECT id1, id2
-                               FROM   gv$lock
-                               WHERE  request = 0
+                  ) WAITER_MODE_REQ
+    FROM   GV$LOCK LW, GV$LOCK LH
+    WHERE  LH.ID1 = LW.ID1
+    AND    LH.ID2 = LW.ID2
+    AND    LH.REQUEST = 0
+    AND    LW.LMODE = 0
+    AND    (LH.ID1, LH.ID2) IN (
+                               SELECT ID1, ID2
+                               FROM   GV$LOCK
+                               WHERE  REQUEST = 0
                                INTERSECT
-                               SELECT id1, id2
-                               FROM   gv$lock
-                               WHERE  lmode = 0)
+                               SELECT ID1, ID2
+                               FROM   GV$LOCK
+                               WHERE  LMODE = 0)
     )
-SELECT distinct LPAD(' ', 3*(LEVEL-1))||sid sid,
-       serial#,
-       inst_id,
-       username,
-       object_name, 
-       sql_id,
-       inst_lock,
-       sid_lock,
-       lock_ctime,
-       inst_wait,
-       sid_wait,
-       wait_ctime,
-       waiter_lock_type,
-       waiter_mode_req
+SELECT 
+       DISTINCT LPAD(' ', 3*(LEVEL-1))||SID SID,
+       SERIAL#,
+       INST_ID,
+       USERNAME,
+       OBJECT_NAME, 
+       SQL_ID,
+       INST_LOCK,
+       SID_LOCK,
+       LOCK_CTIME,
+       INST_WAIT,
+       SID_WAIT,
+       WAIT_CTIME,
+       WAITER_LOCK_TYPE,
+       WAITER_MODE_REQ
 FROM
 (
-    SELECT distinct sid,
-           serial#,
-           inst_id,
-           username,
-           object_name, 
-           sql_id,
-           blocking_session,
-           decode(blocking_session, null, null, l.inst_lock) inst_lock,
-           decode(blocking_session, null, null, l.sid_lock) sid_lock,
-           decode(blocking_session, null, null, l.lock_ctime) lock_ctime,
-           decode(blocking_session, null, null, l.inst_wait) inst_wait,
-           decode(blocking_session, null, null, l.sid_wait) sid_wait,
-           decode(blocking_session, null, null, l.wait_ctime) wait_ctime,
-           decode(blocking_session, null, null, l.waiter_lock_type) waiter_lock_type,
-           decode(blocking_session, null, null, l.waiter_mode_req) waiter_mode_req
-      FROM sessions s
-      JOIN locks l on (l.inst_lock = s.inst_id and l.sid_lock = s.sid) or (l.inst_wait = s.inst_id and l.sid_wait = s.sid)
-      LEFT OUTER JOIN dba_objects 
-           ON (object_id = row_wait_obj#)
-     WHERE sid IN (SELECT blocking_session FROM sessions)
-        OR blocking_session IS NOT NULL
+    SELECT DISTINCT SID,
+           SERIAL#,
+           INST_ID,
+           USERNAME,
+           OBJECT_NAME, 
+           SQL_ID,
+           BLOCKING_SESSION,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.INST_LOCK) INST_LOCK,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.SID_LOCK) SID_LOCK,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.LOCK_CTIME) LOCK_CTIME,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.INST_WAIT) INST_WAIT,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.SID_WAIT) SID_WAIT,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.WAIT_CTIME) WAIT_CTIME,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.WAITER_LOCK_TYPE) WAITER_LOCK_TYPE,
+           DECODE(BLOCKING_SESSION, NULL, NULL, L.WAITER_MODE_REQ) WAITER_MODE_REQ
+      FROM SESSIONS S
+      JOIN LOCKS L ON (L.INST_LOCK = S.INST_ID AND L.SID_LOCK = S.SID) OR (L.INST_WAIT = S.INST_ID AND L.SID_WAIT = S.SID)
+      LEFT OUTER JOIN DBA_OBJECTS 
+           ON (OBJECT_ID = ROW_WAIT_OBJ#)
+     WHERE SID IN (SELECT BLOCKING_SESSION FROM SESSIONS)
+        OR BLOCKING_SESSION IS NOT NULL
 )
-CONNECT BY PRIOR sid = blocking_session
-START WITH blocking_session IS NULL
-ORDER SIBLINGS BY lock_ctime, wait_ctime
-/ 
-
-
-
--- prompt "##########  Objetos em lock ##########"
-
--- SELECT
---         count(Object_Name),
---         B.Object_Name
--- FROM 
---         GV$Locked_Object A, 
---         dba_Objects B,
---         gv$session C
--- WHERE 
---         a.INST_ID = c.INST_ID AND
---         A.Object_ID = B.Object_ID AND
---         SESSION_ID = SID AND
---         C.USERNAME = A.Oracle_Username  
--- group by B.Object_Name having count(Object_Name) > 0
--- order by 1 asc
--- /
-
--- SELECT
---         B.Object_Name,
---         c.username,
---         SESSION_ID,
---         c.inst_id
--- FROM 
---         GV$Locked_Object A, 
---         dba_Objects B,
---         gv$session C
--- WHERE 
---         a.INST_ID = c.INST_ID AND
---         A.Object_ID = B.Object_ID AND
---         SESSION_ID = SID 
--- order by 1 asc
--- /
-
-/*
- COL Obj FORMAT A30
-select inst_id "Inst. bloqueada",  sid "SID bloqueada", username, B.OWNER||'.'||B.Object_Name "Obj",
-blocking_session "SID bloqueadora", BLOCKING_INSTANCE "Inst. bloqueadora" ,BLOCKING_SESSION_STATUS AS "Lock Status",a.STATUS, program,
-a.*
-from gv$session A,
-dba_Objects B where blocking_session is not null AND
-A.ROW_WAIT_OBJ# = B.Object_ID  
-/
-*/
-
-clear col
-
+CONNECT BY PRIOR SID = BLOCKING_SESSION
+START WITH BLOCKING_SESSION IS NULL
+ORDER SIBLINGS BY LOCK_CTIME, WAIT_CTIME;

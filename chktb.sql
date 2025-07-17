@@ -1,5 +1,5 @@
 /*
-Checa uso das tablespaces
+    Checa uso das tablespaces
 */
 set pages 900 lines 900
 

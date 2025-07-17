@@ -1,5 +1,5 @@
 /*
-Checa uso de disco no ASM
+    Checa uso de disco no ASM
 */
 
 COL "NAME"     FORMAT A20

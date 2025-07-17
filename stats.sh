@@ -1,5 +1,14 @@
 ## SH para coleta de estatisticas em CDB/PDB, chamada stats.sh <SID> <PDB> <PORCENTAGEM_COLETA>
 
+# valida se foram informados 3 parametros
+if [ $# -ne 3 ]; then
+    echo
+    echo "Erro: faltam parametros."
+    echo "Uso: $0 <SID> <PDB> <PORCENTAGEM_COLETA>"
+    echo
+    exit 1
+fi
+
 nohup sqlplus / as sysdba << EOF >> coleta_${1}.log &
 set time on
 set timing on
