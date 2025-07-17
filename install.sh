@@ -1,37 +1,83 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# destino dos scripts
-TARGET="${HOME}/scripts"
-mkdir -p "$TARGET" && cd "$TARGET"
+echo
+echo "=== Iniciando instalacao do oracle_adm_scripts por Vitor Christovao ==="
+echo
 
-if command -v curl >/dev/null; then
-  curl -sL https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
-    | tar xz --strip-components=1
-elif command -v wget >/dev/null; then
-  wget -qO- https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
-    | tar xz --strip-components=1
+# 1) Criar pasta de scripts
+read -p "1) Criar/destino dos scripts em '$HOME/scripts_vitor'? [y/N] " resp
+if [[ $resp =~ ^[Yy]$ ]]; then
+  TARGET_DIR="${HOME}/scripts_vitor"
+  echo "-> Criando pasta $TARGET_DIR..."
+  mkdir -p "$TARGET_DIR"
+  cd "$TARGET_DIR"
+  echo "   Pasta criada e acessada."
 else
-  echo
-  echo "Erro: curl ou wget nao encontrados."
-  echo
-  exit 1
+  echo "   Pulando criacao de pasta de scripts."
 fi
+echo
 
+# 2) Baixar e extrair o repo
+read -p "2) Baixar e extrair oracle_adm_scripts no destino atual? [y/N] " resp
+if [[ $resp =~ ^[Yy]$ ]]; then
+  echo "-> Iniciando download do repositorio..."
+  if command -v curl >/dev/null; then
+    curl -sL https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
+      | tar xz --strip-components=1
+  elif command -v wget >/dev/null; then
+    wget -qO- https://codeload.github.com/VgHy/oracle_adm_scripts/tar.gz/master \
+      | tar xz --strip-components=1
+  else
+    echo "Erro: nem curl nem wget encontrados. Abortando."
+    exit 1
+  fi
+  echo "   Download e extracao concluidos."
+else
+  echo "   Pulando download do repositorio."
+fi
+echo
 
-# cria o dir de destino
-TARGET_DIAG="$HOME/diag_oracle"
-mkdir -p "$TARGET_DIAG"
-
-echo "Criando links em $TARGET_DIAG ..."
-
-# varre os dirs /u01, /u02, /u03, /u04, /orabin, /orabin01 e /orabin02
-for DIR in /u01 /u02 /u03 /u04 /orabin /orabin01 /orabin02 /oracle; do
-  [ -d "$DIR" ] || continue
-  find "$DIR" -type f -name 'alert_*.log' 2>/dev/null | while read -r log; do
-    name=$(basename "$log")
-    [ -e "$TARGET_DIAG/$name" ] || ln -s "$log" "$TARGET_DIAG/$name"
+# 3) Criar pasta de diag e links de alert logs
+read -p "3) Criar ~/diag_oracle e links para todos os alert_*.log? [y/N] " resp
+if [[ $resp =~ ^[Yy]$ ]]; then
+  TARGET_DIAG="${HOME}/diag_oracle"
+  echo "-> Criando pasta $TARGET_DIAG..."
+  mkdir -p "$TARGET_DIAG"
+  echo "-> Varredura para alert logs..."
+  for DIR in /u01 /u02 /u03 /u04 /orabin /orabin01 /orabin02 /oracle; do
+    [ -d "$DIR" ] || continue
+    find "$DIR" -type f -name 'alert_*.log' 2>/dev/null | while read -r log; do
+      name=$(basename "$log")
+      if [ -e "$TARGET_DIAG/$name" ]; then
+        echo "   [OK] link existente: $name"
+      else
+        ln -s "$log" "$TARGET_DIAG/$name"
+        echo "   [+] criado link: $name"
+      fi
+    done
   done
-done
+  echo "   Links criados em $TARGET_DIAG."
+else
+  echo "   Pulando criacao de links de alert logs."
+fi
+echo
 
-echo "Links criados em $TARGET_DIAG"
+# 4) Atualizar .bash_profile com SQL_PATH
+read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] " resp
+if [[ $resp =~ ^[Yy]$ ]]; then
+  BASH_PROFILE="${HOME}/.bash_profile"
+  echo "-> Atualizando $BASH_PROFILE..."
+  if grep -q 'SQL_PATH' "$BASH_PROFILE" 2>/dev/null; then
+    echo "   Erro: SQL_PATH ja configurado em $BASH_PROFILE."
+    exit 1
+  else
+    {
+      echo
+      echo "# configurado pelo install.sh em $(date +'%Y-%m-%d %H:%M:%S')"
+      echo "export SQL_PATH=${TARGET_DIR}"
+    } >> "$BASH_PROFILE"
+    echo "   SQL_PATH adicionado com sucesso."
+  fi
+else
+  echo "   Pulando configuracao de
