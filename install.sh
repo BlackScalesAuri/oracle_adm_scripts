@@ -6,7 +6,7 @@ echo "=== Iniciando instalacao do oracle_adm_scripts por Vitor Christovao ==="
 echo
 
 TARGET_DIR="$HOME/scripts_vitor"
-TARGET_DIAG="${HOME}/diag_oracle"
+TARGET_DIAG="${HOME}/oradiag_oracle"
 BASH_PROFILE="${HOME}/.bash_profile"
 
 # 1) Criar pasta de scripts
@@ -39,7 +39,7 @@ fi
 echo
 
 # 3) Criar pasta de diag e links de alert logs
-read -p "3) Criar ~/diag_oracle e links para todos os alert_*.log? [y/N] " resp
+read -p "3) Criar ~/oradiag_oracle e links para todos os alert_*.log? [y/N] " resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
   mkdir -p "$TARGET_DIAG"
