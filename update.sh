@@ -28,4 +28,4 @@ else
   exit 1
 fi
 
-echo "Atualizacao aplicada com sucesso em $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Atualizacao feita com sucesso em $(date '+%Y-%m-%d %H:%M:%S')"
