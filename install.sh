@@ -38,29 +38,38 @@ else
 fi
 echo
 
-# 3) Criar pasta de diag e links de alert logs
-read -p "3) Criar ~/oradiag_oracle e links para todos os alert_*.log? [y/N] " resp
+read -p "3) Criar $TARGET_DIAG e links para alert_*.log? [y/N] " resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
   mkdir -p "$TARGET_DIAG"
+
   echo "-> Varredura para alert logs..."
-  for DIR in /u01 /u02 /u03 /u04 /orabin/ /orabin01/ /orabin02/ /oracle; do
-    [ -d "$DIR" ] || continue
-    find "$DIR" -type f -name 'alert_*.log' 2>/dev/null | while read -r log; do
+  find /u01 /u02 /u03 /u04 /orabin /orabin01 /orabin02 /oracle -type f -name 'alert_*.log' 2>/dev/null | while read -r log; do
+
       name=$(basename "$log")
-      if [ -e "$TARGET_DIAG/$name" ]; then
-        echo "   [OK] link existente: $name"
+      dest="$TARGET_DIAG/$name"
+
+      if [ -e "$dest" ]; then
+        echo "   [OK] já existe: $name"
       else
-        ln -s "$log" "$TARGET_DIAG/$name"
-        echo "   [+] criado link: $name"
+        echo "   Arquivo encontrado: $log"
+        # força o read a ler do terminal, não do pipe
+        read -p "   Criar este link simbólico? [y/N] " aws < /dev/tty
+        if [ "$aws" = "y" ] || [ "$aws" = "Y" ]; then
+          ln -s "$log" "$dest" && echo "   [+] criado link: $name"
+        else
+          echo "   [-] pulando: $name"
+        fi
       fi
-    done
+
   done
-  echo "   Links criados em $TARGET_DIAG."
+
+  echo "-> Processo concluído. Links em $TARGET_DIAG."
 else
-  echo "   Pulando criacao de links de alert logs."
+  echo "-> Pulando criação de links de alert logs."
 fi
-echo
+
+
 
 # 4) Atualizar .bash_profile com SQL_PATH
 read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
