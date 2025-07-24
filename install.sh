@@ -71,20 +71,20 @@ fi
 
 
 
-# 4) Atualizar .bash_profile com SQL_PATH
-read -p "4) Adicionar '$TARGET_DIR' como SQL_PATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
+# 4) Atualizar .bash_profile com SQLPATH
+read -p "4) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
 if [[ $resp =~ ^[Yy]$ ]]; then
   echo "-> Atualizando $BASH_PROFILE..."
-  if grep -q 'SQL_PATH' "$BASH_PROFILE" 2>/dev/null; then
-    echo "   Erro: SQL_PATH ja configurado em $BASH_PROFILE."
+  if grep -q 'SQLPATH' "$BASH_PROFILE" 2>/dev/null; then
+    echo "   Erro: SQLPATH ja configurado em $BASH_PROFILE."
     exit 1
   else
     {
       echo
       echo "# configurado pelo install.sh em $(date +'%Y-%m-%d %H:%M:%S')"
-      echo "export SQL_PATH=${TARGET_DIR}"
+      echo "export SQLPATH=${TARGET_DIR}"
     } >> "$BASH_PROFILE"
-    echo "   SQL_PATH adicionado com sucesso."
+    echo "   SQLPATH adicionado com sucesso."
   fi
 else
     echo "   Pulando criacao de pasta de scripts."
