@@ -1,0 +1,1 @@
+watch -n $1 "sqlplus -S / as sysdba @/home/oracle/scripts_vitor/mn.sql"
