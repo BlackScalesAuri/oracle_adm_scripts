@@ -10,7 +10,7 @@
  */
 SET VERIFY OFF
 
-DEFINE PCT_THRES = 25 -- Minimum free space in percentage
+DEFINE PCT_THRES = 20 -- Minimum free space in percentage
 
 COLUMN file_name FORMAT a100 word_wrapped
 COLUMN smallest  FORMAT 999,990 HEADING "Smallest|Size|Poss."

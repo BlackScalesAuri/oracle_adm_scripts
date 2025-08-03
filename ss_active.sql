@@ -41,7 +41,7 @@ select s.username,
 	             s.event 
 		    ELSE 'ON CPU' END event,
 	   s.seconds_in_wait sec_wait,
-      s.SERVICE_NAME,
+      SUBSTR(s.service_name, 1, 20),
 	   s.sql_id
 from gv$session s, gv$process p
 where s.username is not null
