@@ -1,37 +1,49 @@
 #!/usr/bin/env bash
-# Monitora load medio 1min de dois hosts via SSH
-# Limpa tela e imprime host:load em verde se load <= threshold, em vermelho se load > threshold
+# Monitora load médio de $LOCALHOST + N hosts via SSH
+# Cores: verde (OK), vermelho (acima do limite), amarelo (erro)
+# Última linha sem quebra de linha
 
 THRESHOLD=$1
-HOST1=$2
-HOST2=$3
+shift
 
-if [ -z "$THRESHOLD" ] || [ -z "$HOST1" ] || [ -z "$HOST2" ]; then
-  echo "Uso: $0 <LOAD_MAXIMO> <HOST1> <HOST2>"
+if [ -z "$THRESHOLD" ]; then
+  echo "Uso: $0 <LOAD_MAXIMO> [HOST1] [HOST2] ..."
   exit 1
 fi
 
 trap 'echo; echo Monitor interrompido.; exit 0' INT
 
+LOCALHOST=$(hostname)
+HOSTS=("$LOCALHOST" "$@")
+TOTAL=${#HOSTS[@]}
+
 while true; do
-  LOAD1=$(ssh "$HOST1" "awk '{print \$1}' /proc/loadavg")
-  LOAD2=$(ssh "$HOST2" "awk '{print \$1}' /proc/loadavg")
-
   clear
-  
-  # Host1
-  if (( $(echo "$LOAD1 > $THRESHOLD" | bc -l) )); then
-    echo -e "\e[31m$HOST1: $LOAD1\e[0m"
-  else
-    echo -e "\e[32m$HOST1: $LOAD1\e[0m"
-  fi
 
-  # Host2
-  if (( $(echo "$LOAD2 > $THRESHOLD" | bc -l) )); then
-    echo -n -e "\e[31m$HOST2: $LOAD2\e[0m"
-  else
-    echo -n -e "\e[32m$HOST2: $LOAD2\e[0m"
-  fi
+  for i in "${!HOSTS[@]}"; do
+    HOST=${HOSTS[$i]}
+    IS_LAST=$(( i == TOTAL - 1 ))
+
+    if [ "$HOST" = "$LOCALHOST" ]; then
+      LOAD=$(awk '{print $1}' /proc/loadavg)
+    else
+      LOAD=$(ssh -o ConnectTimeout=3 "$HOST" "awk '{print \$1}' /proc/loadavg" 2>/dev/null)
+    fi
+
+    if [ -z "$LOAD" ]; then
+      LINE="\e[33m$HOST: indisponível\e[0m"
+    elif (( $(echo "$LOAD > $THRESHOLD" | bc -l) )); then
+      LINE="\e[31m$HOST: $LOAD\e[0m"
+    else
+      LINE="\e[32m$HOST: $LOAD\e[0m"
+    fi
+
+    if [ "$IS_LAST" -eq 1 ]; then
+      echo -n -e "$LINE"
+    else
+      echo -e "$LINE"
+    fi
+  done
 
   sleep 1
 done
