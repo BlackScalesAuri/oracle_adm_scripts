@@ -15,7 +15,7 @@ col log_time       format a10 heading 'HORARIO|DO LOGIN' justify right
 col inicio_ult_cmd format a14 heading 'TEMPO ATIVO|OU INATIVO' justify right
 col module         format a15 truncate
 col event          format a25 truncate
-col SERVICE_NAME   format a20 heading 'SERVICE|NAME' justify left
+col SERVICE_NAME   format a20 truncate heading 'SERVICE|NAME' justify left
 col sec_wait       format 999999
 
 select s.username,
