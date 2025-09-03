@@ -38,7 +38,7 @@ else
 fi
 echo
 
-read -p "4) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
+read -p "3) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Atualizando $BASH_PROFILE..."
   if grep -q 'SQLPATH' "$BASH_PROFILE" 2>/dev/null; then
@@ -56,7 +56,7 @@ else
     echo "   Pulando criacao de pasta de scripts."
 fi
 
-read -p "3) Criar $TARGET_DIAG e links para alert_*.log? [y/N] " resp
+read -p "4) Criar $TARGET_DIAG e links para alert_*.log? [y/N] " resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
   mkdir -p "$TARGET_DIAG"
