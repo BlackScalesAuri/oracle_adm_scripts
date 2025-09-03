@@ -38,6 +38,24 @@ else
 fi
 echo
 
+read -p "4) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
+if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
+  echo "-> Atualizando $BASH_PROFILE..."
+  if grep -q 'SQLPATH' "$BASH_PROFILE" 2>/dev/null; then
+    echo "   Erro: SQLPATH ja configurado em $BASH_PROFILE."
+    exit 1
+  else
+    {
+      echo
+      echo "# configurado pelo install.sh em $(date +'%Y-%m-%d %H:%M:%S')"
+      echo "export SQLPATH=${TARGET_DIR}"
+    } >> "$BASH_PROFILE"
+    echo "   SQLPATH adicionado com sucesso."
+  fi
+else
+    echo "   Pulando criacao de pasta de scripts."
+fi
+
 read -p "3) Criar $TARGET_DIAG e links para alert_*.log? [y/N] " resp
 if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Criando pasta $TARGET_DIAG..."
@@ -69,23 +87,3 @@ else
   echo "-> Pulando criação de links de alert logs."
 fi
 
-
-
-# 4) Atualizar .bash_profile com SQLPATH
-read -p "4) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
-if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
-  echo "-> Atualizando $BASH_PROFILE..."
-  if grep -q 'SQLPATH' "$BASH_PROFILE" 2>/dev/null; then
-    echo "   Erro: SQLPATH ja configurado em $BASH_PROFILE."
-    exit 1
-  else
-    {
-      echo
-      echo "# configurado pelo install.sh em $(date +'%Y-%m-%d %H:%M:%S')"
-      echo "export SQLPATH=${TARGET_DIR}"
-    } >> "$BASH_PROFILE"
-    echo "   SQLPATH adicionado com sucesso."
-  fi
-else
-    echo "   Pulando criacao de pasta de scripts."
-fi
