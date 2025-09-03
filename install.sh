@@ -73,7 +73,7 @@ fi
 
 # 4) Atualizar .bash_profile com SQLPATH
 read -p "4) Adicionar '$TARGET_DIR' como SQLPATH em ~/.bash_profile? [y/N] !! NAO FAZER EM ODA/EXADATA !!" resp
-if [[ $resp =~ ^[Yy]$ ]]; then
+if [ "$resp" = "y" ] || [ "$resp" = "Y" ]; then
   echo "-> Atualizando $BASH_PROFILE..."
   if grep -q 'SQLPATH' "$BASH_PROFILE" 2>/dev/null; then
     echo "   Erro: SQLPATH ja configurado em $BASH_PROFILE."

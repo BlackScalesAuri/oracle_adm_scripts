@@ -1,63 +1,40 @@
-set pagesize 5000
-set linesize 350
-column status        format a10
-column table_name    format a30
-column fk_name       format a30
-column fk_columns    format a30
-column index_name    format a30
-column index_columns format a30
+COLUMN STATUS        FORMAT A10
+COLUMN TABLE_NAME    FORMAT A30
+COLUMN FK_NAME       FORMAT A30
+COLUMN FK_COLUMNS    FORMAT A60
+COLUMN INDEX_NAME    FORMAT A30
+COLUMN INDEX_COLUMNS FORMAT A30
+COLUMN TABLE_OWNER   FORMAT A30
 
-select
-case
-   when b.table_name is null then
-      'unindexed'
-   else
-      'indexed'
-end as status,
-   a.table_name      as table_name,
-   a.constraint_name as fk_name,
-  a.fk_columns      as fk_columns,
-  b.index_name      as index_name,
-  b.index_columns   as index_columns
-from
-(
-   select
-    a.table_name,
-   a.constraint_name,
-   listagg(a.column_name, ',') within
-group (order by a.position) fk_columns
-from
-   dba_cons_columns a,
-   dba_constraints b
-where
-   a.constraint_name = b.constraint_name
-and
-   b.constraint_type = 'R'
-and
-   a.owner = '&&schema_owner'
-and
-   a.owner = b.owner
-group by
-   a.table_name,
-   a.constraint_name
-) a
-,(
-select
-   table_name,
-   index_name,
-   listagg(c.column_name, ',') within
-group (order by c.column_position) index_columns
-from
-   dba_ind_columns c
-where
-   c.index_owner = '&&schema_owner'
-group by
-   table_name,
-   index_name
-) b
-where
-   a.table_name = b.table_name(+)
-and
-   b.index_columns(+) like a.fk_columns || '%'
-order by
-   1 asc, 2;
+SELECT
+   A.OWNER           AS TABLE_OWNER,
+   A.TABLE_NAME      AS TABLE_NAME,
+   A.CONSTRAINT_NAME AS FK_NAME,
+   A.FK_COLUMNS      AS FK_COLUMNS,
+   B.INDEX_NAME      AS INDEX_NAME,
+   B.INDEX_COLUMNS   AS INDEX_COLUMNS
+FROM
+(  SELECT
+      A.TABLE_NAME, A.CONSTRAINT_NAME, A.OWNER, LISTAGG(A.COLUMN_NAME, ',') WITHIN GROUP (ORDER BY A.POSITION) FK_COLUMNS
+   FROM
+      DBA_CONS_COLUMNS A,DBA_CONSTRAINTS B 
+   WHERE A.CONSTRAINT_NAME = B.CONSTRAINT_NAME
+      AND B.CONSTRAINT_TYPE = 'R'
+      AND A.OWNER LIKE ('%&&SCHEMA_OWNER%')
+      AND A.OWNER NOT IN ('SYS', 'SYSTEM', 'MDSYS', 'GSMADMIN_INTERNAL', 'ORDDATA', 'LBACSYS')
+      AND A.OWNER = B.OWNER
+   GROUP BY
+      A.TABLE_NAME, A.CONSTRAINT_NAME, A.OWNER ) A,
+(  SELECT
+      TABLE_NAME, INDEX_NAME, LISTAGG(C.COLUMN_NAME, ',') WITHIN GROUP (ORDER BY C.COLUMN_POSITION) INDEX_COLUMNS
+   FROM
+      DBA_IND_COLUMNS C
+   WHERE C.INDEX_OWNER LIKE ('%&&SCHEMA_OWNER%')
+      AND C.INDEX_OWNER NOT IN ('SYS', 'SYSTEM', 'MDSYS', 'GSMADMIN_INTERNAL', 'ORDDATA', 'LBACSYS')
+   GROUP BY
+      TABLE_NAME, INDEX_NAME) B
+WHERE A.TABLE_NAME = B.TABLE_NAME(+)
+   AND B.TABLE_NAME IS NULL
+   AND B.INDEX_COLUMNS(+) LIKE A.FK_COLUMNS || '%'
+ORDER BY
+   1, 2 ASC, 3;
