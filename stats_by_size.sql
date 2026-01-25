@@ -12,69 +12,84 @@ COLUMN gather_stats_cmd FORMAT A700
 
 spo GATHER_STATS_BY_SIZE.sql
 
-WITH excluded_owners AS (
-  SELECT 'SYS' owner FROM dual UNION ALL
-  SELECT 'SYSTEM' FROM dual UNION ALL
-  SELECT 'XDB' FROM dual UNION ALL
-  SELECT 'SYSMAN' FROM dual UNION ALL
-  SELECT 'WMSYS' FROM dual UNION ALL
-  SELECT 'CTXSYS' FROM dual UNION ALL
-  SELECT 'ORDDATA' FROM dual UNION ALL
-  SELECT 'ORDSYS' FROM dual UNION ALL
-  SELECT 'OLAPSYS' FROM dual UNION ALL
-  SELECT 'DBSNMP' FROM dual UNION ALL
-  SELECT 'MDSYS' FROM dual
+WITH segmentos AS (
+    SELECT
+        owner,
+        segment_name,
+        segment_type,
+        SUM(bytes)/1024/1024 AS size_mb
+    FROM dba_segments
+    WHERE segment_type IN ('TABLE','INDEX','LOBSEGMENT','LOB PARTITION')
+    GROUP BY owner, segment_name, segment_type
 ),
-tabelas AS (
-  SELECT owner, table_name
-  FROM   dba_tables
-  WHERE  owner NOT IN (SELECT owner FROM excluded_owners)
-    AND  owner NOT LIKE 'APEX\_%' ESCAPE '\'
+tabela_raw AS (
+    SELECT
+        t.owner,
+        t.table_name,
+        NVL(s_tab.size_mb,0) AS table_mb,
+        NVL(s_lob.size_mb,0) AS lob_mb,
+        NVL(s_idx.size_mb,0) AS idx_mb
+    FROM dba_tables t
+    LEFT JOIN segmentos s_tab
+           ON s_tab.owner = t.owner
+          AND s_tab.segment_name = t.table_name
+          AND s_tab.segment_type = 'TABLE'
+    LEFT JOIN dba_lobs l
+           ON l.owner = t.owner
+          AND l.table_name = t.table_name
+    LEFT JOIN segmentos s_lob
+           ON s_lob.owner = l.owner
+          AND s_lob.segment_name = l.segment_name
+          AND s_lob.segment_type IN ('LOBSEGMENT','LOB PARTITION')
+    LEFT JOIN dba_indexes i
+           ON i.table_owner = t.owner
+          AND i.table_name  = t.table_name
+    LEFT JOIN segmentos s_idx
+           ON s_idx.owner = i.owner
+          AND s_idx.segment_name = i.index_name
+          AND s_idx.segment_type = 'INDEX'
+    WHERE t.owner NOT IN (
+        'SYS','SYSTEM','XDB','SYSMAN','WMSYS','CTXSYS','ORDDATA',
+        'ORDSYS','OLAPSYS','DBSNMP','MDSYS'
+    )
 ),
-table_data AS (
-  SELECT owner, segment_name AS table_name,
-         SUM(bytes)/1024/1024 AS size_mb
-  FROM   dba_segments
-  WHERE  segment_type = 'TABLE'
-  GROUP  BY owner, segment_name
-),
-lob_data AS (
-  SELECT l.owner, l.table_name,
-         SUM(s.bytes)/1024/1024 AS size_mb
-  FROM   dba_lobs l
-  JOIN   dba_segments s
-    ON   l.segment_name = s.segment_name
-   AND   l.owner = s.owner
-  GROUP  BY l.owner, l.table_name
-),
-index_data AS (
-  SELECT i.table_owner AS owner, i.table_name,
-         SUM(s.bytes)/1024/1024 AS size_mb
-  FROM   dba_indexes i
-  JOIN   dba_segments s
-    ON   i.owner = s.owner
-   AND   i.index_name = s.segment_name
-  GROUP  BY i.table_owner, i.table_name
+consolidado AS (
+    SELECT
+        owner,
+        table_name,
+        SUM(table_mb) AS total_table_mb,
+        SUM(lob_mb)   AS total_lob_mb,
+        SUM(idx_mb)   AS total_idx_mb,
+        ROW_NUMBER() OVER (
+            PARTITION BY owner, table_name
+            ORDER BY 1
+        ) AS rn
+    FROM tabela_raw
+    GROUP BY owner, table_name
 )
 SELECT
-  'EXEC DBMS_STATS.GATHER_TABLE_STATS(' ||
-  'ownname=>''' || t.owner || ''',' ||
-  'tabname=>''' || t.table_name || ''',' ||
-  'estimate_percent=>100,' ||
-  'block_sample=>FALSE,' ||
-  'method_opt=>''FOR ALL COLUMNS SIZE AUTO'',' ||
-  'degree=>NULL,' ||
-  'granularity=>''ALL'',' ||
-  'cascade=>TRUE,' ||
-  'stattab=>NULL,' ||
-  'statid=>NULL,' ||
-  'no_invalidate=>TRUE);' AS gather_stats_cmd
-FROM   tabelas t
-LEFT JOIN table_data td ON t.owner = td.owner AND t.table_name = td.table_name
-LEFT JOIN lob_data   ld ON t.owner = ld.owner AND t.table_name = ld.table_name
-LEFT JOIN index_data id ON t.owner = id.owner AND t.table_name = id.table_name
+    'EXEC DBMS_STATS.GATHER_TABLE_STATS(' ||
+    'ownname=>''' || owner || ''',' ||
+    'tabname=>''' || table_name || ''',' ||
+    'estimate_percent=>100,' ||
+    'block_sample=>FALSE,' ||
+    'method_opt=>''FOR ALL COLUMNS SIZE AUTO'',' ||
+    'degree=>NULL,' ||
+    'granularity=>''ALL'',' ||
+    'cascade=>TRUE,' ||
+    'stattab=>NULL,' ||
+    'statid=>NULL,' ||
+    'no_invalidate=>TRUE);' AS gather_stats_cmd
+FROM consolidado
+WHERE rn = 1
 ORDER BY
-  NVL(td.size_mb,0) + NVL(ld.size_mb,0) + NVL(id.size_mb,0) ASC, t.owner, t.table_name;
+      total_table_mb
+    + total_lob_mb
+    + total_idx_mb,
+    owner,
+    table_name;
+
+
 
 spo off
 
