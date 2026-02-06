@@ -7,12 +7,11 @@ prompt == Uptime ===============================================================
 
 prompt == Longops =====================================================================
 
-col USERNAME for a6
-COLUMN message FORMAT A150 TRUNC
+col USERNAME for a12
+COL message FOR A150 TRUNC
 col DONE_TOTAL for A24
 col ELAPSED for a14
 col TIME_LEFT for a15
-col USERNAME for a10
 col OPNAME for a35
 col TARGET for a35
 
