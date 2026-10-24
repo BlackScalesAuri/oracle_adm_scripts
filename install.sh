@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo
-echo "=== Iniciando instalacao do oracle_adm_scripts por Vitor Christovao ==="
-echo
+# Uso: install.sh [--alert-links]   (--alert-links executa so o passo dos alert logs; usado pelo update.sh)
 
 TARGET_DIR="$HOME/scripts_vitor"
 TARGET_DIAG="${HOME}/oradiag_oracle"
@@ -116,6 +114,63 @@ link_alert() {
   fi
 }
 
+# Cria/revalida os links alert_<SID>.log em $TARGET_DIAG para as instancias ativas
+alert_links() {
+  local found=0 pid sid home log dir cands
+  echo "-> Criando pasta $TARGET_DIAG..."
+  mkdir -p "$TARGET_DIAG"
+
+  echo "-> Procurando instancias ativas (pmon)..."
+  # process substitution + fd 3: o loop roda no shell atual (found persiste) e nao compete com o ask()
+  while read -r pid sid <&3; do
+      found=1
+      home=$(instance_home "$pid" "$sid")
+      echo "-> Instancia $sid (pid $pid, ORACLE_HOME ${home:-desconhecido})"
+
+      log=""
+      dir=$(diag_trace_sql "$sid" "$home")
+      if [ -n "$dir" ] && [ -f "$dir/alert_$sid.log" ]; then
+        log="$dir/alert_$sid.log"
+        echo "   via v\$diag_info: $log"
+      else
+        mapfile -t cands < <(alert_candidates "$sid" "$home")
+        if [ ${#cands[@]} -gt 0 ]; then
+          log=$(choose_log "$sid" "${cands[@]}")
+          if [ -n "$log" ]; then echo "   via ADR/disco: $log"; fi
+        else
+          echo "   [x] alert_$sid.log nao encontrado."
+        fi
+      fi
+
+      if [ -n "$log" ]; then
+        link_alert "$log" "$TARGET_DIAG/alert_$sid.log"
+      fi
+  done 3< <(running_instances)
+
+  if [ "$found" -eq 0 ]; then
+    echo "   Nenhuma instancia ativa encontrada."
+    if ask "   Buscar alert logs no disco mesmo assim? (pode trazer logs fora de uso)"; then
+      # mais recente primeiro: em nomes repetidos o primeiro link fica com o log mais novo
+      while read -r log <&3; do
+          echo "   Arquivo encontrado: $log [$(date -r "$log" '+%Y-%m-%d %H:%M')]"
+          link_alert "$log" "$TARGET_DIAG/$(basename "$log")"
+      done 3< <(find "${ALERT_SEARCH_DIRS[@]}" -type f -path '*/diag/*/trace/alert_*.log' -printf '%T@ %p\n' 2>/dev/null \
+                  | sort -rn | cut -d' ' -f2-)
+    fi
+  fi
+
+  echo "-> Processo concluído. Links em $TARGET_DIAG."
+}
+
+if [ "${1:-}" = "--alert-links" ]; then
+  alert_links
+  exit 0
+fi
+
+echo
+echo "=== Iniciando instalacao do oracle_adm_scripts por Vitor Christovao ==="
+echo
+
 # 1) Criar pasta de scripts, baixar e extrair o repo
 if ask "1) Criar pasta '$TARGET_DIR' e baixar/extrair oracle_adm_scripts nela?"; then
   echo "-> Criando pasta $TARGET_DIR..."
@@ -158,50 +213,7 @@ echo
 
 # 3) Links para alert logs
 if ask "3) Criar $TARGET_DIAG e links para os alert logs das instancias ativas?"; then
-  echo "-> Criando pasta $TARGET_DIAG..."
-  mkdir -p "$TARGET_DIAG"
-
-  echo "-> Procurando instancias ativas (pmon)..."
-  found=0
-  # process substitution + fd 3: o loop roda no shell atual (found persiste) e nao compete com o ask()
-  while read -r pid sid <&3; do
-      found=1
-      home=$(instance_home "$pid" "$sid")
-      echo "-> Instancia $sid (pid $pid, ORACLE_HOME ${home:-desconhecido})"
-
-      log=""
-      dir=$(diag_trace_sql "$sid" "$home")
-      if [ -n "$dir" ] && [ -f "$dir/alert_$sid.log" ]; then
-        log="$dir/alert_$sid.log"
-        echo "   via v\$diag_info: $log"
-      else
-        mapfile -t cands < <(alert_candidates "$sid" "$home")
-        if [ ${#cands[@]} -gt 0 ]; then
-          log=$(choose_log "$sid" "${cands[@]}")
-          if [ -n "$log" ]; then echo "   via ADR/disco: $log"; fi
-        else
-          echo "   [x] alert_$sid.log nao encontrado."
-        fi
-      fi
-
-      if [ -n "$log" ]; then
-        link_alert "$log" "$TARGET_DIAG/alert_$sid.log"
-      fi
-  done 3< <(running_instances)
-
-  if [ "$found" -eq 0 ]; then
-    echo "   Nenhuma instancia ativa encontrada."
-    if ask "   Buscar alert logs no disco mesmo assim? (pode trazer logs fora de uso)"; then
-      # mais recente primeiro: em nomes repetidos o primeiro link fica com o log mais novo
-      while read -r log <&3; do
-          echo "   Arquivo encontrado: $log [$(date -r "$log" '+%Y-%m-%d %H:%M')]"
-          link_alert "$log" "$TARGET_DIAG/$(basename "$log")"
-      done 3< <(find "${ALERT_SEARCH_DIRS[@]}" -type f -path '*/diag/*/trace/alert_*.log' -printf '%T@ %p\n' 2>/dev/null \
-                  | sort -rn | cut -d' ' -f2-)
-    fi
-  fi
-
-  echo "-> Processo concluído. Links em $TARGET_DIAG."
+  alert_links
 else
   echo "-> Pulando criação de links de alert logs."
 fi
