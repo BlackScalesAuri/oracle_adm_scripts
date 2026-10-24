@@ -1,6 +1,7 @@
 
+@?/rdbms/admin/spdrop
 
-create tablespace PERFSTAT datafile '/oradata/prd/datafile/perfstat01.dbf'  size 300M autoextend on next 8M maxsize 16G;
+create tablespace PERFSTAT datafile  size 300M autoextend on next 8M maxsize 16G;
 define default_tablespace='perfstat'
 define temporary_tablespace='temp'
 @?/rdbms/admin/spcreate

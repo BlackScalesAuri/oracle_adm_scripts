@@ -7,7 +7,7 @@ select
   sid,
   to_char(start_time,'YYYY-MM-DD HH24:MI:SS'),
   start_time,
-  totalwork
+  totalwork,
   sofar,
   (sofar/totalwork) * 100 pct_done
 from

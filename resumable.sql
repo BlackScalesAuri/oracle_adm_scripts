@@ -25,6 +25,6 @@ SELECT r.session_id,
        r.error_number,
        r.error_msg AS error_parameter1
 FROM   dba_resumable r
-JOIN   gv$session s ON s.sid = r.session_id
+JOIN   gv$session s ON s.sid = r.session_id AND s.inst_id = r.instance_id
 LEFT   JOIN gv$sql q ON q.sql_id = s.sql_id AND q.inst_id = s.inst_id
 ORDER  BY status, r.start_time DESC;

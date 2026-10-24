@@ -23,16 +23,17 @@ SET TERMOUT ON
 SELECT
     a.tablespace_name,
     a.bytes Bytes,
-    (a.bytes - b.bytes) Used,
-    b.bytes Free,
-    ROUND(((a.bytes-b.bytes)/a.bytes)*100,2) Pct_used
+    (a.bytes - NVL(b.bytes,0)) Used,
+    NVL(b.bytes,0) Free,
+    ROUND(((a.bytes-NVL(b.bytes,0))/a.bytes)*100,2) Pct_used
 FROM (SELECT tablespace_name, SUM(bytes/1024/1024) BYTES
         FROM dba_data_files GROUP BY tablespace_name) a,
      (SELECT tablespace_name, SUM(bytes/1024/1024) BYTES
         FROM dba_free_space GROUP BY tablespace_name) b
-WHERE a.tablespace_name=b.tablespace_name
+-- outer join: tablespace 100% cheia nao tem linha em dba_free_space
+WHERE a.tablespace_name=b.tablespace_name(+)
     AND a.tablespace_name like '%&1%'
-ORDER BY ROUND(((a.bytes-b.bytes)/a.bytes)*100,2) DESC;
+ORDER BY ROUND(((a.bytes-NVL(b.bytes,0))/a.bytes)*100,2) DESC;
 
 CLEAR COL
 UNDEF 1

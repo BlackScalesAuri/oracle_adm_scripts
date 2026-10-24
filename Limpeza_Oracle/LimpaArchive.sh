@@ -16,4 +16,4 @@ EOF
 echo
 echo "Limpando Logs" >> $LOG_FILE
 echo
-find $2 -type f -mtime 5 -name "limpaArchive_*.log" -exec rm -fv {} \; >> $LOG_FILE
+find $2 -type f -mtime +5 -name "limpaArchive_*.log" -exec rm -fv {} \; >> $LOG_FILE

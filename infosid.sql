@@ -21,7 +21,7 @@ SELECT UNIQUE
     'Disconnect  : ALTER SYSTEM DISCONNECT SESSION ''' || gs.SID ||','|| gs.SERIAL# || ''' IMMEDIATE;'                   || chr(10) ||
     'Trace ON    : EXEC SYS.DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION ('|| gs.SID ||', '|| gs.SERIAL# ||', TRUE)'             || chr(10) ||
     'Trace OFF   : EXEC SYS.DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION ('|| gs.SID ||', '|| gs.SERIAL# ||', FALSE)'            || chr(10) ||
-    'Explain     : select * from table(dbms_xplan.display_cursor('''||SQL_HASH_VALUE||''',null,''ADVANCED''));'          || chr(10) ||
+    'Explain     : select * from table(dbms_xplan.display_cursor('''||gs.SQL_ID||''',null,''ADVANCED''));'          || chr(10) ||
     'SID,SERIAL# : '''|| gs.SID || ',' || gs.SERIAL# || ',@' || gs.INST_ID || ''' | Process ID Unix: ' || SPID     || chr(10) ||
     'Machine     : '|| gs.machine    || chr(10) ||
     'Terminal    : '|| gs.terminal   || chr(10) ||

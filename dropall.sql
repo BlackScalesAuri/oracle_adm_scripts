@@ -43,9 +43,9 @@ select 'drop public synonym ' || synonym_name || ';' from dba_synonyms where tab
 /
 select 'drop synonym ' || owner || '.' || synonym_name || ';' from dba_synonyms where table_owner = upper('&VAR_OWNER') and owner != 'PUBLIC' and db_link is null order by owner, synonym_name
 /
-select 'exec sys.dbms_ijob.remove(' || job || ');' from dba_jobs where  log_user like '&VAR_OWNER' or priv_user like '&VAR_OWNER' or schema_user like '&VAR_OWNER'
+select 'exec sys.dbms_ijob.remove(' || job || ');' from dba_jobs where  log_user like upper('&VAR_OWNER') or priv_user like upper('&VAR_OWNER') or schema_user like upper('&VAR_OWNER')
 /
-select 'exec sys.DBMS_SCHEDULER.DROP_JOB(Job_name =>''' || OWNER || '.' || JOB_NAME || ''');' from dba_scheduler_jobs where owner like '&VAR_OWNER'
+select 'exec sys.DBMS_SCHEDULER.DROP_JOB(Job_name =>''' || OWNER || '.' || JOB_NAME || ''');' from dba_scheduler_jobs where owner like upper('&VAR_OWNER')
 /
 
 PROMPT select count(1), object_type from dba_objects where owner='&VAR_OWNER' group by object_type;;

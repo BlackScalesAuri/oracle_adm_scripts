@@ -19,7 +19,7 @@ export ORACLE_SID=producao2
 sqlplus / as sysdba << EOF 
 INSERT INTO TEIKOBKP.MON_SESS_19C (Status, Schema, Qtd, Hora)
   SELECT 'INATIVA', username, count(1), sysdate
-   from gv\$session where STATUS='ACTIVE' group by username;
+   from gv\$session where STATUS='INACTIVE' group by username;
 commit;
 INSERT INTO TEIKOBKP.MON_SESS_19C (Status, Schema, Qtd, Hora)
   SELECT 'ATIVA', username, count(1), sysdate

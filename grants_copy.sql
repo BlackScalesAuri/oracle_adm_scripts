@@ -16,13 +16,13 @@ select 'grant '||granted_role||' to "&VAR_USER_D";'
 from DBA_ROLE_PRIVS where grantee = upper('&VAR_USER_O');
 
 select 'grant '||privilege||' to "&VAR_USER_D";'
-from DBA_SYS_PRIVS where grantee in ('&VAR_USER_O');
+from DBA_SYS_PRIVS where grantee = upper('&VAR_USER_O');
 
 select 'grant '||privilege||' on "'||owner||'"."'||table_name||'" to "&VAR_USER_D";'
-from DBA_TAB_PRIVS where grantee in ('&VAR_USER_O');
+from DBA_TAB_PRIVS where grantee = upper('&VAR_USER_O');
 
 select 'grant '||privilege||' ('||column_name||') '||' on "'||owner||'"."'||table_name||'" to "&VAR_USER_D";'
-from DBA_COL_PRIVS where grantee in ('&VAR_USER_O');
+from DBA_COL_PRIVS where grantee = upper('&VAR_USER_O');
 
 SPO off
 set head on

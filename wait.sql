@@ -17,7 +17,7 @@ SELECT
     c.spid      "OS PID",
     TO_CHAR(TRUNC(a.seconds_in_wait/3600),'FM9900') || 'h:' || TO_CHAR(TRUNC(MOD(a.seconds_in_wait,3600)/60),'FM00') || 'm:' ||  TO_CHAR(MOD(a.seconds_in_wait,60),'FM00') || 's' "TEMPO EM WAIT",
     b.status    "STATUS",
-    TO_CHAR(b.logon_time, 'DD/MM/YYYY HH:MM') "START SESSION",
+    TO_CHAR(b.logon_time, 'DD/MM/YYYY HH24:MI') "START SESSION",
     b.program    "PROGRAMA",
     a.wait_time,
     b.sql_id,
@@ -34,8 +34,10 @@ FROM
     gv$process c
 WHERE a.event not in ('SQL*Net message from client','SQL*Net message to client')
     AND a.sid = b.sid
+    AND a.inst_id = b.inst_id
     AND decode(nvl(c.background, 0), 0, ' ', 'B') <> 'B'
     AND c.addr = b.paddr (+)
+    AND c.inst_id = b.inst_id (+)
     AND c.spid IS NOT NULL
     AND b.username LIKE Upper('%&VAR_USER%')
 ORDER BY a.seconds_in_wait DESC;

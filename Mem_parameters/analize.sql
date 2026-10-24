@@ -58,7 +58,7 @@ UNION ALL
 SELECT 'Sorts in Mem Ratio: ' "Param",
     ROUND((SELECT SUM(value) FROM V$SYSSTAT WHERE name = 'sorts (memory)') / 
         (SELECT SUM(value) FROM V$SYSSTAT     WHERE name IN ('sorts (memory)', 'sorts (disk)')) * 100, 2) "Valor",
-        ' <  02' "Esperado"
+        ' >= 98 ' "Esperado"
 FROM DUAL
 UNION ALL
 select 

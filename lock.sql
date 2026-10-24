@@ -66,14 +66,15 @@ SELECT LH.INST_ID INST_LOCK, LH.SID SID_LOCK, ROUND(LH.CTIME/60/60,2) LOCK_CTIME
 FROM   GV$LOCK LW, GV$LOCK LH
 WHERE  LH.ID1 = LW.ID1
 AND    LH.ID2 = LW.ID2
+AND    LH.TYPE = LW.TYPE
 AND    LH.REQUEST = 0
 AND    LW.LMODE = 0
-AND    (LH.ID1, LH.ID2) IN (
-                           SELECT ID1, ID2
+AND    (LH.TYPE, LH.ID1, LH.ID2) IN (
+                           SELECT TYPE, ID1, ID2
                            FROM   GV$LOCK
                            WHERE  REQUEST = 0
                            INTERSECT
-                           SELECT ID1, ID2
+                           SELECT TYPE, ID1, ID2
                            FROM   GV$LOCK
                            WHERE  LMODE = 0)
 )  T1
@@ -131,14 +132,15 @@ LOCKS AS
     FROM   GV$LOCK LW, GV$LOCK LH
     WHERE  LH.ID1 = LW.ID1
     AND    LH.ID2 = LW.ID2
+    AND    LH.TYPE = LW.TYPE
     AND    LH.REQUEST = 0
     AND    LW.LMODE = 0
-    AND    (LH.ID1, LH.ID2) IN (
-                               SELECT ID1, ID2
+    AND    (LH.TYPE, LH.ID1, LH.ID2) IN (
+                               SELECT TYPE, ID1, ID2
                                FROM   GV$LOCK
                                WHERE  REQUEST = 0
                                INTERSECT
-                               SELECT ID1, ID2
+                               SELECT TYPE, ID1, ID2
                                FROM   GV$LOCK
                                WHERE  LMODE = 0)
     )

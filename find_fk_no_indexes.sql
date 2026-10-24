@@ -34,7 +34,7 @@ where
 and
    b.constraint_type = 'R'
 and
-   a.owner = '&&schema_owner'
+   a.owner = upper('&&schema_owner')
 and
    a.owner = b.owner
 group by
@@ -50,7 +50,7 @@ group (order by c.column_position) index_columns
 from
    dba_ind_columns c
 where
-   c.index_owner = '&&schema_owner'
+   c.index_owner = upper('&&schema_owner')
 group by
    table_name,
    index_name

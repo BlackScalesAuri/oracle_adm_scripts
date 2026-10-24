@@ -12,60 +12,56 @@ COLUMN gather_stats_cmd FORMAT A700
 
 spo GATHER_STATS_BY_SIZE.sql
 
+-- tabela, LOBs e indices somados em CTEs separadas: juntar tudo num join so multiplica as linhas
+-- (ex.: 2 LOBs x 3 indices contaria a tabela 6 vezes)
 WITH segmentos AS (
     SELECT
         owner,
         segment_name,
-        segment_type,
         SUM(bytes)/1024/1024 AS size_mb
     FROM dba_segments
-    WHERE segment_type IN ('TABLE','INDEX','LOBSEGMENT','LOB PARTITION')
-    GROUP BY owner, segment_name, segment_type
+    WHERE segment_type IN ('TABLE','TABLE PARTITION','TABLE SUBPARTITION',
+                           'INDEX','INDEX PARTITION','INDEX SUBPARTITION',
+                           'LOBSEGMENT','LOB PARTITION','LOB SUBPARTITION')
+    GROUP BY owner, segment_name
 ),
-tabela_raw AS (
+lobs AS (
+    SELECT l.owner, l.table_name, SUM(s.size_mb) AS size_mb
+    FROM dba_lobs l
+    JOIN segmentos s
+      ON s.owner = l.owner
+     AND s.segment_name = l.segment_name
+    GROUP BY l.owner, l.table_name
+),
+indices AS (
+    SELECT i.table_owner AS owner, i.table_name, SUM(s.size_mb) AS size_mb
+    FROM dba_indexes i
+    JOIN segmentos s
+      ON s.owner = i.owner
+     AND s.segment_name = i.index_name
+    GROUP BY i.table_owner, i.table_name
+),
+consolidado AS (
     SELECT
         t.owner,
         t.table_name,
-        NVL(s_tab.size_mb,0) AS table_mb,
-        NVL(s_lob.size_mb,0) AS lob_mb,
-        NVL(s_idx.size_mb,0) AS idx_mb
+        NVL(s_tab.size_mb,0) AS total_table_mb,
+        NVL(s_lob.size_mb,0) AS total_lob_mb,
+        NVL(s_idx.size_mb,0) AS total_idx_mb
     FROM dba_tables t
     LEFT JOIN segmentos s_tab
            ON s_tab.owner = t.owner
           AND s_tab.segment_name = t.table_name
-          AND s_tab.segment_type = 'TABLE'
-    LEFT JOIN dba_lobs l
-           ON l.owner = t.owner
-          AND l.table_name = t.table_name
-    LEFT JOIN segmentos s_lob
-           ON s_lob.owner = l.owner
-          AND s_lob.segment_name = l.segment_name
-          AND s_lob.segment_type IN ('LOBSEGMENT','LOB PARTITION')
-    LEFT JOIN dba_indexes i
-           ON i.table_owner = t.owner
-          AND i.table_name  = t.table_name
-    LEFT JOIN segmentos s_idx
-           ON s_idx.owner = i.owner
-          AND s_idx.segment_name = i.index_name
-          AND s_idx.segment_type = 'INDEX'
+    LEFT JOIN lobs s_lob
+           ON s_lob.owner = t.owner
+          AND s_lob.table_name = t.table_name
+    LEFT JOIN indices s_idx
+           ON s_idx.owner = t.owner
+          AND s_idx.table_name = t.table_name
     WHERE t.owner NOT IN (
         'SYS','SYSTEM','XDB','SYSMAN','WMSYS','CTXSYS','ORDDATA',
         'ORDSYS','OLAPSYS','DBSNMP','MDSYS'
     )
-),
-consolidado AS (
-    SELECT
-        owner,
-        table_name,
-        SUM(table_mb) AS total_table_mb,
-        SUM(lob_mb)   AS total_lob_mb,
-        SUM(idx_mb)   AS total_idx_mb,
-        ROW_NUMBER() OVER (
-            PARTITION BY owner, table_name
-            ORDER BY 1
-        ) AS rn
-    FROM tabela_raw
-    GROUP BY owner, table_name
 )
 SELECT
     'EXEC DBMS_STATS.GATHER_TABLE_STATS(' ||
@@ -81,7 +77,6 @@ SELECT
     'statid=>NULL,' ||
     'no_invalidate=>TRUE);' AS gather_stats_cmd
 FROM consolidado
-WHERE rn = 1
 ORDER BY
       total_table_mb
     + total_lob_mb

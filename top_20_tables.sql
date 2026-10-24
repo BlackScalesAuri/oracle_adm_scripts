@@ -15,6 +15,6 @@ with segment_rollup as (
   where s.owner=r.segment_owner and s.segment_name=r.segment_name
   group by r.owner, r.table_name
 )
-select rank, owner, table_name, round(blocks*8/1024/1024) mb
+select rank, owner, table_name, round(blocks*8/1024/1024, 2) gb
 from ranked_tables
 where rank<=20;

@@ -48,18 +48,21 @@ FROM
     dba_scheduler_jobs j
 LEFT JOIN (
     /* conta quantas execucoes falharam */
-    SELECT 
+    SELECT
+        owner,
         job_name,
         COUNT(*) AS failures
-    FROM 
+    FROM
         dba_scheduler_job_run_details
-    WHERE 
+    WHERE
         status != 'SUCCEEDED'
-    GROUP BY 
-        job_name
-) f 
-  ON j.job_name = f.job_name
-ORDER BY 
+    GROUP BY
+        owner, job_name
+) f
+  ON j.owner = f.owner AND j.job_name = f.job_name
+WHERE
+    j.owner LIKE UPPER('%&VAR_OWNER%')
+ORDER BY
     j.owner, j.job_name;
 
 
