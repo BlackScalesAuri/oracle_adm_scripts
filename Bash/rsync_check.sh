@@ -1,8 +1,9 @@
 #!/bin/bash
 
-export LOG_FILE=/backup-postgresql/migracao/rsync_check.log
-export DIR_ORIGEM="mv@10.7.7.66:/pg_backup/fisico/*"
-export DIR_DESTINO=/backup-postgresql/migracao/
+# Ajuste as variaveis abaixo para o ambiente
+export LOG_FILE=/tmp/rsync_check.log
+export DIR_ORIGEM="usuario@servidor_origem:/caminho/origem/*"
+export DIR_DESTINO=/caminho/destino/
 export TAG_RSYNC="-Padr --size-only"
 
 date >> $LOG_FILE

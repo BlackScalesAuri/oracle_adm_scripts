@@ -15,7 +15,7 @@ export sbyinstance=()
 export tbyinstance=()
 
 # Instancias a monitorar
-export instances=( "portal1" "solus1" "producao1" "prd1")
+export instances=( "orcl1" "orcl2" )
 
 # Diretorio os scripts
 export mon_dir=/home/oracle/coleta_19c/

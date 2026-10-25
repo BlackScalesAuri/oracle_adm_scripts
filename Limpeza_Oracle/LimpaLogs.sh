@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Uso [COMO ROOT] LimpaLogs.sh <Caminho Log>
-# */5 * * * * sh /home/oracle/flowti/scripts/LimpaLogs.sh /home/oracle/flowti/scripts/logs >> /dev/null
+# */5 * * * * sh /home/oracle/scripts/LimpaLogs.sh /home/oracle/scripts/logs >> /dev/null
 
 export LOG_FILE=$1/limpaLogs_`date '+%d%m%Y'`.log
 

@@ -1,7 +1,7 @@
 . /home/oracle/.bash_profile
 
 sqlplus / as sysdba << EOF
-spo /u01/app/oracle/Flowti/logs/kill_old_session.log append
+spo /home/oracle/scripts/logs/kill_old_session.log append
 !date
 set pages 900 lines 900 trimspo on head off serveroutput off feed off
 
